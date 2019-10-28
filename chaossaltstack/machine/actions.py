@@ -12,12 +12,12 @@ from .. import saltstack_api_client
 from ..types import SaltStackResponse
 from .constants import OS_LINUX, OS_WINDOWS
 from .constants import BURN_CPU, FILL_DISK, NETWORK_UTIL, \
-    BURN_IO, KILLALL_PROCESSES, KILL_PROCESS
+    BURN_IO, KILLALL_PROCESSES, KILL_PROCESS, RUN_CMD
 
 
 __all__ = ["burn_cpu", "fill_disk", "network_latency", "burn_io",
            "network_loss", "network_corruption", "network_advanced",
-           "killall_processes", "kill_process"]
+           "killall_processes", "kill_process", "run_cmd"]
 
 
 def burn_cpu(instance_ids: List[str] = None,
@@ -209,7 +209,7 @@ def network_loss(instance_ids: List[str] = None,
     param["duration"] = execution_duration
     param["param"] = "loss " + loss_ratio
     param["device"] = device
-    
+
     return __default_salt_experiment__(instance_ids=instance_ids,
                                        execution_duration=execution_duration,
                                        param=param,
@@ -252,7 +252,6 @@ def network_corruption(instance_ids: List[str] = None,
     param["duration"] = execution_duration
     param["param"] = "corrupt " + corruption_ratio
     param["device"] = device
-
 
     return __default_salt_experiment__(instance_ids=instance_ids,
                                        execution_duration=execution_duration,
@@ -341,7 +340,7 @@ def killall_processes(instance_ids: List[str] = None,
         Chaostoolkit Secrets
     """
     logger.debug(
-        "Start network_latency: configuration='{}', instance_ids='{}'".format(
+        "Start killall_process: configuration='{}', instance_ids='{}'".format(
             configuration, instance_ids))
 
     param = dict()
@@ -389,7 +388,7 @@ def kill_process(instance_ids: List[str] = None,
         Chaostoolkit Secrets
     """
     logger.debug(
-        "Start network_latency: configuration='{}', instance_ids='{}'".format(
+        "Start kill_process: configuration='{}', instance_ids='{}'".format(
             configuration, instance_ids))
 
     param = dict()
@@ -401,6 +400,50 @@ def kill_process(instance_ids: List[str] = None,
                                        execution_duration=execution_duration,
                                        param=param,
                                        experiment_type=KILL_PROCESS,
+                                       configuration=configuration,
+                                       secrets=secrets
+                                       )
+
+
+def run_cmd(instance_ids: List[str] = None,
+            execution_duration: str = "60",
+            cmd: List[str] = None,
+            configuration: Configuration = None,
+            secrets: Secrets = None) -> SaltStackResponse:
+    """
+    run cmd
+    Linus -> Shell
+    Windows -> PowerShell
+
+    Parameters
+    ----------
+    instance_ids : List[str]
+        Filter the virtual machines. If the filter is omitted all machines in
+        the subscription will be selected as potential chaos candidates.
+    execution_duration : str, optional default to 1 second
+        This is not technically not useful as the process usually is killed
+        without and delay, however you can set more seconds here to let the
+        thread wait for more time to extend your experiment execution in case
+        you need to watch more on the observation metrics.
+    cmd : List[str]
+        Lines of your commands
+    configuration : Configuration
+        Chaostoolkit Configuration
+    secrets : Secrets
+        Chaostoolkit Secrets
+    """
+    logger.debug(
+        "Start run_cmd: configuration='{}', instance_ids='{}'".format(
+            configuration, instance_ids))
+
+    param = dict()
+    param["duration"] = execution_duration
+    param["cmd"] = cmd
+
+    return __default_salt_experiment__(instance_ids=instance_ids,
+                                       execution_duration=execution_duration,
+                                       param=param,
+                                       experiment_type=RUN_CMD,
                                        configuration=configuration,
                                        secrets=secrets
                                        )
@@ -459,25 +502,52 @@ def __default_salt_experiment__(instance_ids: List[str] = None,
         )
 
 
-def __construct_script_content__(action, os_type, parameters):
+def __construct_script_content__(action: str = None,
+                                 os_type: str = None,
+                                 parameters: dict = None):
+    """
+    As for now, no Windows action supported except burn CPU
 
-    if os_type == OS_WINDOWS:
-        script_name = action+".ps1"
-        # TODO in ps1
-        cmd_param = '\n'.join(
-            ['='.join([k, "'"+v+"'"]) for k, v in parameters.items()])
-    elif os_type == OS_LINUX:
-        script_name = action+".sh"
-        cmd_param = '\n'.join(
-            ['='.join([k, "'"+v+"'"]) for k, v in parameters.items()])
+    :param action:
+    :param os_type: { OS_LINUX | OS_WINDOWS }
+    :param parameters:
+    :return:
+    """
+
+    cmd_param = ""
+    if os_type == OS_LINUX:
+        file_suffix = ".sh"
+        p_delimiter = ""
+        cmdline_delimiter = " && "
+    elif os_type == OS_WINDOWS:
+        file_suffix = ".ps1"
+        p_delimiter = "$"
+        cmdline_delimiter = "\n"
     else:
         raise FailedActivity(
             "Cannot find corresponding script for {} on OS: {}".format(
                 action, os_type))
 
+    if action == "run_cmd":
+        cmdline_param = cmdline_delimiter.join(parameters['cmd'])
+        # parameters.pop('cmd')
+        del parameters['cmd']
+    else:
+        cmdline_param = ""
+
+    if parameters is not None:
+        param_list = list()
+        for k, v in parameters.items():
+            param_list.append('='.join([p_delimiter + k, "'" + v + "'"]))
+        cmd_param = '\n'.join(param_list)
+    else:
+        logger.info("No parameter parsed, return default script content")
+
+    script_name = action + file_suffix
+
     with open(os.path.join(os.path.dirname(__file__),
                            "scripts", script_name)) as file:
         script_content = file.read()
     # merge duration
-    script_content = cmd_param + "\n" + script_content
+    script_content = cmd_param + "\n" + cmdline_param + "\n" + script_content
     return script_content

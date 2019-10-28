@@ -8,7 +8,7 @@ done
 EOF
 
 chmod +x /tmp/loop.sh
-timeout --preserve-status $duration /tmp/loop.sh
+timeout $duration /tmp/loop.sh
 
 # while true;
 # do
@@ -16,7 +16,7 @@ timeout --preserve-status $duration /tmp/loop.sh
 # done &
 
 ret=$?
-if [ $ret -eq 0 ]; then
+if [[ $ret -eq 0 || $ret -eq 124 ]]; then
     echo "experiment burnio -> <$instance_id>: success"
 else
     echo "experiment brunio -> <$instance_id>: fail"

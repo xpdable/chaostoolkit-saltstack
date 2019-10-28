@@ -1,28 +1,28 @@
 # Changelog
 
-## [0.1.1][]
+## [0.1.3]
 
 ### Changed
 
-- Bugfix: kill process now passes correct parameter
-- Refactory: abstract core workflow into one common function to reduce duplicates
+-  Refactory: [Issue #4](https://github.com/chaostoolkit-incubator/chaostoolkit-saltstack/issues/4) Salt API accepts eauth method as parameter in configuration
 
 ### Added
 
-- Network experiments now accepts device name to adapt different os
-- Add experiment action of kill processes by name
-- Add experiment action of kill process by PID
-- Add experiment probe to check process PID by name
+-  Add experiment action: run customized command line with run_cmd method
+
+## [0.1.1]
 
 ### Changed
 
-- Refactory: abstract core workflow into one common function to reduce duplicates
+-  Bugfix: kill process now passes correct parameter
+-  Refactory: abstract core workflow into one common function to reduce duplicates
 
 ### Added
 
-- Add experiment action of kill processes by name
-- Add experiment action of kill process by PID
-- Add experiment probe to check process PID by name
+-  Network experiments now accepts device name to adapt different os
+-  Add experiment action of kill processes by name
+-  Add experiment action of kill process by PID
+-  Add experiment probe to check process PID by name
 
 ## [0.1.0][]
 

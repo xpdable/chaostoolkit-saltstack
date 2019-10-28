@@ -17,9 +17,9 @@ fi
 experiment=$(tc qdisc add dev $device root netem $param)
 ret=$?
 if [ $ret -eq 0 ]; then
-    echo "experiment network_latency -> <$instance_id>: success"
+    echo "experiment network:[$param] -> <$instance_id>: success"
 else
-    echo "experiment network_latency -> <$instance_id>: fail"
+    echo "experiment network:[$param] -> <$instance_id>: fail"
 fi
 
 #Sleep $duration
@@ -38,7 +38,7 @@ fi
 tc -s qdisc show dev $device |grep pfifo_fast 2>&1 >/dev/null
 ret2=$?
 if [ $ret2 -eq 0 ]; then
-    echo "recover network_latency -> <$instance_id>: success"
+    echo "recover network:[$param] -> <$instance_id>: success"
 else
-    echo "recover network_latency -> <$instance_id>: fail"
+    echo "recover network:[$param] -> <$instance_id>: fail"
 fi

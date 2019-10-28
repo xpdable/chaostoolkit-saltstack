@@ -120,6 +120,7 @@ There are two ways of doing this:
     ```
     
 * or you inject the secrets explicitly to the experiment definition:
+  SALTMASTER_EAUTH is optional and default to pam
 
     ```json
     {
@@ -127,6 +128,7 @@ There are two ways of doing this:
             "SALTMASTER_HOST": "https://172.10.20.666",
             "SALTMASTER_USER": "username",
             "SALTMASTER_PASSWORD": "password"
+            "SALTMASTER_EAUTH": "sharedsecret"
         }
     }
     ```

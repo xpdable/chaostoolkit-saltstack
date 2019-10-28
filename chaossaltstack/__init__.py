@@ -33,6 +33,7 @@ class salt_api_client:
         elif 'username' in configuration:
             self.username = configuration['username']
             self.password = configuration['password']
+            self.eauth = configuration['eauth']
         # Default settings for Salt Master
         self.headers = {"Content-type": "application/json"}
         self.params = {'client': 'local', 'fun': '', 'tgt': ''}
@@ -40,7 +41,7 @@ class salt_api_client:
         self.login_url = self.url + "/login"
         self.login_params = {
             'username': self.username, 'password': self.password,
-            'eauth': 'pam'
+            'eauth': self.eauth
         }
 
     def run_cmd(self, tgt, method: str, arg=None):
@@ -164,9 +165,10 @@ def saltstack_api_client(secrets: Secrets = None) -> salt_api_client:
 
         * SALTMASTER_HOST: Salt Master API address
 
-        You can authenticate with user / password via:
+        You can authenticate with user / password / eauth via:
         * SALTMASTER_USER: the user name
         * SALTMASTER_PASSWORD: the password
+        * SALTMASTER_EAUTH: the auth method, default to pam
 
         Or via a token:
         * SALTMASTER_TOKEN
@@ -197,6 +199,7 @@ def saltstack_api_client(secrets: Secrets = None) -> salt_api_client:
         if "SALTMASTER_USER" in env or "SALTMASTER_USER" in secrets:
             configuration['username'] = lookup("SALTMASTER_USER", "")
             configuration['password'] = lookup("SALTMASTER_PASSWORD", "")
+            configuration['eauth'] = lookup("SALTMASTER_EAUTH", "pam")
         elif "SALTMASTER_TOKEN" in env or "SALTMASTER_TOKEN" in secrets:
             configuration['token'] = lookup("SALTMASTER_TOKEN")
         else:
